@@ -1,0 +1,59 @@
+name: reproductor
+description: "Onda — Reproductor de música sin anuncios"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Motor de audio
+  just_audio: ^0.9.40
+  audio_service: ^0.18.14
+
+  # Biblioteca musical (MediaStore de Android)
+  on_audio_query: ^2.9.0
+
+  # Estado
+  flutter_riverpod: ^2.5.1
+
+  # Almacenamiento de listas
+  shared_preferences: ^2.3.2
+
+  # Permisos
+  permission_handler: ^11.3.1
+
+  # Compartir archivos
+  share_plus: ^10.0.2
+
+  # Abrir carpeta en gestor de archivos
+  open_filex: ^4.4.1
+
+  # Fuentes
+  google_fonts: ^6.2.1
+
+dependency_overrides:
+  on_audio_query_android:
+    path: ./local_packages/on_audio_query_android
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.2
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/onda_icon.png"
+  adaptive_icon_background: "#0A0A14"
+  adaptive_icon_foreground: "assets/icon/onda_icon.png"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1A1030"/>
+      <stop offset="100%" stop-color="#0A0A14"/>
+    </linearGradient>
+    <linearGradient id="bars" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="50%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Fondo -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Barras de ecualizador — simétricas, bell-curve -->
+  <g fill="url(#bars)" filter="url(#glow)">
+    <!-- Bar 1 (leftmost, shortest) -->
+    <rect x="60"  y="218" width="44" height="76"  rx="10"/>
+    <!-- Bar 2 -->
+    <rect x="118" y="182" width="44" height="148" rx="10"/>
+    <!-- Bar 3 -->
+    <rect x="176" y="136" width="44" height="240" rx="10"/>
+    <!-- Bar 4 (center, tallest) -->
+    <rect x="234" y="96"  width="44" height="320" rx="10"/>
+    <!-- Bar 5 -->
+    <rect x="292" y="136" width="44" height="240" rx="10"/>
+    <!-- Bar 6 -->
+    <rect x="350" y="182" width="44" height="148" rx="10"/>
+    <!-- Bar 7 (rightmost, shortest) -->
+    <rect x="408" y="218" width="44" height="76"  rx="10"/>
+  </g>
+
+  <!-- Acento: línea base sutil -->
+  <rect x="60" y="424" width="392" height="4" rx="2" fill="#8B5CF6" opacity="0.4"/>
+</svg>
