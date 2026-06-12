@@ -59,18 +59,54 @@ class LibraryService {
     }
   }
 
-  // Borra el archivo directamente. En Android 11+ puede requerir
-  // permiso adicional; si falla devuelve false y el UI lo indica.
+  // Borra el archivo del dispositivo utilizando la API nativa de Android (MediaStore)
   static Future<bool> deleteSong(BuildContext context, SongModel song) async {
+    if (!Platform.isAndroid) return false;
     try {
-      final file = File(song.data);
-      if (await file.exists()) {
-        await file.delete();
-        return true;
+      final bool success = await _channel.invokeMethod('deleteSong', {'path': song.data});
+      if (success) {
+        // Forzar escaneo para que el MediaStore refleje el cambio de inmediato
+        await _query.scanMedia(song.data);
       }
-      return false;
+      return success;
     } catch (_) {
       return false;
+    }
+  }
+
+  // Renombra físicamente el archivo y su título en el MediaStore de Android
+  static Future<bool> renameSong(SongModel song, String newTitle, String newFileName) async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final bool success = await _channel.invokeMethod('renameSong', {
+        'path': song.data,
+        'newTitle': newTitle,
+        'newFileName': newFileName,
+      });
+      if (success) {
+        // Escanear la ruta vieja y la nueva para forzar la actualización del MediaStore
+        final parentDir = File(song.data).parent.path;
+        final newPath = '$parentDir/$newFileName';
+        await _query.scanMedia(song.data);
+        await _query.scanMedia(newPath);
+      }
+      return success;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // Comprime a WebP y escala a 200x200 una carátula personalizada seleccionada de la galería
+  static Future<String?> compressArtwork(String sourcePath, String songId) async {
+    if (!Platform.isAndroid) return null;
+    try {
+      final String? path = await _channel.invokeMethod('compressCoverImage', {
+        'sourcePath': sourcePath,
+        'songId': songId,
+      });
+      return path;
+    } catch (_) {
+      return null;
     }
   }
 }

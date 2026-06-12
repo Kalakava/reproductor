@@ -107,6 +107,18 @@ class PlayerNotifier extends StateNotifier<PlayerStateModel> {
     }
   }
 
+  Future<void> play(List<SongModel> songs, int initialIndex) async {
+    await playFromQueue(songs, initialIndex: initialIndex);
+  }
+
+  Future<void> pause() async {
+    _handler != null ? await _handler!.pause() : await _player.pause();
+  }
+
+  Future<void> resume() async {
+    _handler != null ? await _handler!.play() : await _player.play();
+  }
+
   Future<void> togglePlay() async {
     if (_handler != null) {
       _player.playing ? await _handler!.pause() : await _handler!.play();

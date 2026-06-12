@@ -105,6 +105,14 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
           songs: state.songs.where((s) => s.id != song.id).toList());
     }
   }
+
+  Future<bool> renameSong(SongModel song, String newTitle, String newFileName) async {
+    final success = await LibraryService.renameSong(song, newTitle, newFileName);
+    if (success) {
+      await loadSongs();
+    }
+    return success;
+  }
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────

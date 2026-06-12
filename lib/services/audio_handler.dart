@@ -5,9 +5,19 @@ import 'package:on_audio_query/on_audio_query.dart';
 /// Handler que envuelve [AudioPlayer] y expone los controles de medios
 /// al sistema Android (notificación, pantalla de bloqueo, Bluetooth).
 class OndaAudioHandler extends BaseAudioHandler with SeekHandler {
-  final AudioPlayer _player = AudioPlayer();
+  late final AudioPlayer _player;
+  AndroidEqualizer? _equalizer;
 
   OndaAudioHandler() {
+    _equalizer = AndroidEqualizer();
+    _player = AudioPlayer(
+      audioPipeline: AudioPipeline(
+        androidAudioEffects: [
+          _equalizer!,
+        ],
+      ),
+    );
+
     // Reenviar estado de reproducción al sistema
     _player.playbackEventStream.map(_buildPlaybackState).pipe(playbackState);
 
@@ -21,6 +31,24 @@ class OndaAudioHandler extends BaseAudioHandler with SeekHandler {
 
   /// Acceso al [AudioPlayer] subyacente para los listeners de la UI.
   AudioPlayer get player => _player;
+
+  /// Actualiza las ganancias del ecualizador nativo
+  Future<void> updateEqualizer(bool enabled, double bass, double mid, double treble) async {
+    try {
+      await _equalizer?.setEnabled(enabled);
+      if (enabled) {
+        final params = await _equalizer?.parameters;
+        final bands = params?.bands;
+        if (bands != null && bands.isNotEmpty) {
+          if (bands.length > 0) await bands[0].setGain(bass);
+          if (bands.length > 1) await bands[1].setGain(bass * 0.7);
+          if (bands.length > 2) await bands[2].setGain(mid);
+          if (bands.length > 3) await bands[3].setGain(treble * 0.7);
+          if (bands.length > 4) await bands[4].setGain(treble);
+        }
+      }
+    } catch (_) {}
+  }
 
   // ── Cargar cola ────────────────────────────────────────────────────────────
 

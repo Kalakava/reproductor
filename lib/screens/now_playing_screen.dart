@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:open_filex/open_filex.dart';
@@ -9,6 +11,7 @@ import '../providers/player_provider.dart';
 import '../providers/playlist_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/library_service.dart';
 import '../theme.dart';
 
@@ -27,7 +30,9 @@ class NowPlayingScreen extends ConsumerWidget {
 
     final screenHeight = MediaQuery.sizeOf(context).height;
     final isSmallScreen = screenHeight < 620;
+    final settings = ref.watch(settingsProvider);
     final bgTheme = ref.watch(backgroundThemeProvider);
+    final hasBgImage = settings.backgroundImagePath != null && File(settings.backgroundImagePath!).existsSync();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -53,91 +58,112 @@ class NowPlayingScreen extends ConsumerWidget {
         ],
       ),
       body: Container(
-        decoration: BackgroundThemeHelper.getDecoration(bgTheme),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
-            child: Column(
-              children: [
-                const Spacer(flex: 2),
-                // ── Portada ──────────────────────────────────────────────────
-                _AlbumArt(albumId: song.albumId ?? 0, isPlaying: state.isPlaying),
-                const Spacer(flex: 2),
-              // ── Título ───────────────────────────────────────────────────
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          song.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: isSmallScreen ? 20 : 22,
-                              fontWeight: FontWeight.w700,
-                              color: OndaTheme.textPrimary),
+        decoration: hasBgImage
+            ? BoxDecoration(
+                image: DecorationImage(
+                  image: FileImage(File(settings.backgroundImagePath!)),
+                  fit: BoxFit.cover,
+                ),
+              )
+            : BackgroundThemeHelper.getDecoration(bgTheme),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: hasBgImage
+                ? ImageFilter.blur(sigmaX: 10, sigmaY: 10)
+                : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+            child: Container(
+              color: hasBgImage ? Colors.black.withOpacity(0.65) : Colors.transparent,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
+                  child: Column(
+                    children: [
+                      const Spacer(flex: 2),
+                      // ── Portada ──────────────────────────────────────────────────
+                      _AlbumArt(
+                        songId: song.id.toString(),
+                        albumId: song.albumId ?? 0,
+                        isPlaying: state.isPlaying,
+                      ),
+                      const Spacer(flex: 2),
+                      // ── Título ───────────────────────────────────────────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  song.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: isSmallScreen ? 20 : 22,
+                                      fontWeight: FontWeight.w700,
+                                      color: OndaTheme.textPrimary),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  song.artist ?? 'Artista desconocido',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      color: OndaTheme.textSecondary, fontSize: 15),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.playlist_add,
+                                color: OndaTheme.primary, size: 28),
+                            onPressed: () =>
+                                _showAddToPlaylist(context, ref, song.id),
+                            tooltip: 'Añadir a lista',
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isSmallScreen ? 16 : 28),
+                      // ── Barra de progreso ─────────────────────────────────────────
+                      _ProgressBar(state: state, ref: ref),
+                      SizedBox(height: isSmallScreen ? 12 : 20),
+                      // ── Controles principales ─────────────────────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _LoopButton(state: state, ref: ref),
+                          _NavButton(
+                            icon: Icons.skip_previous_rounded,
+                            size: isSmallScreen ? 30 : 36,
+                            onTap: () => ref.read(playerProvider.notifier).previous(),
+                          ),
+                          _PlayPauseButton(isPlaying: state.isPlaying, ref: ref),
+                          _NavButton(
+                            icon: Icons.skip_next_rounded,
+                            size: isSmallScreen ? 30 : 36,
+                            onTap: () => ref.read(playerProvider.notifier).next(),
+                          ),
+                          _ShuffleButton(state: state, ref: ref),
+                        ],
+                      ),
+                      const Spacer(flex: 3),
+                      // ── Marca de agua de autoría ─────────────────────────────────
+                      Text(
+                        'Onda • Desarrollado por Damián Arenas',
+                        style: TextStyle(
+                          color: OndaTheme.textSecondary.withOpacity(0.25),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          song.artist ?? 'Artista desconocido',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: OndaTheme.textSecondary, fontSize: 15),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.playlist_add,
-                        color: OndaTheme.primary, size: 28),
-                    onPressed: () =>
-                        _showAddToPlaylist(context, ref, song.id),
-                    tooltip: 'Añadir a lista',
-                  ),
-                ],
-              ),
-              SizedBox(height: isSmallScreen ? 16 : 28),
-              // ── Barra de progreso ─────────────────────────────────────────
-              _ProgressBar(state: state, ref: ref),
-              SizedBox(height: isSmallScreen ? 12 : 20),
-              // ── Controles principales ─────────────────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _LoopButton(state: state, ref: ref),
-                  _NavButton(
-                    icon: Icons.skip_previous_rounded,
-                    size: isSmallScreen ? 30 : 36,
-                    onTap: () => ref.read(playerProvider.notifier).previous(),
-                  ),
-                  _PlayPauseButton(isPlaying: state.isPlaying, ref: ref),
-                  _NavButton(
-                    icon: Icons.skip_next_rounded,
-                    size: isSmallScreen ? 30 : 36,
-                    onTap: () => ref.read(playerProvider.notifier).next(),
-                  ),
-                  _ShuffleButton(state: state, ref: ref),
-                ],
-              ),
-              const Spacer(flex: 3),
-              // ── Marca de agua de autoría ─────────────────────────────────
-              Text(
-                'Onda • Desarrollado por Damián Arenas',
-                style: TextStyle(
-                  color: OndaTheme.textSecondary.withOpacity(0.25),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.8,
                 ),
               ),
-              const SizedBox(height: 12),
-            ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -400,46 +426,126 @@ class NowPlayingScreen extends ConsumerWidget {
 
 // ─── Portada animada ──────────────────────────────────────────────────────────
 
-class _AlbumArt extends StatelessWidget {
+// ─── Portada animada ──────────────────────────────────────────────────────────
+
+class _AlbumArt extends ConsumerWidget {
+  final String songId;
   final int albumId;
   final bool isPlaying;
-  const _AlbumArt({required this.albumId, required this.isPlaying});
+  const _AlbumArt({
+    required this.songId,
+    required this.albumId,
+    required this.isPlaying,
+  });
+
+  Future<void> _editCover(BuildContext context, WidgetRef ref) async {
+    final picker = ImagePicker();
+    try {
+      final image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        final compressedPath = await LibraryService.compressArtwork(image.path, songId);
+        if (compressedPath != null) {
+          await ref.read(settingsProvider.notifier).setCustomCover(songId, compressedPath);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Carátula actualizada con éxito.')),
+            );
+          }
+        } else if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error al procesar la carátula.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final customCoverPath = settings.customCovers[songId];
     final screenHeight = MediaQuery.sizeOf(context).height;
     // Adaptar dinámicamente el tamaño de la portada en función de la altura disponible
     final double maxSize = (screenHeight * 0.35).clamp(160.0, 280.0);
     final double currentSize = isPlaying ? maxSize : maxSize * 0.85;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: currentSize,
-      height: currentSize,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: OndaTheme.primary.withOpacity(isPlaying ? 0.35 : 0.15),
-            blurRadius: isPlaying ? 50 : 20,
-            spreadRadius: isPlaying ? 8 : 0,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: QueryArtworkWidget(
-          id: albumId,
-          type: ArtworkType.ALBUM,
-          artworkWidth: 300,
-          artworkHeight: 300,
-          artworkFit: BoxFit.cover,
-          keepOldArtwork: true,
-          nullArtworkWidget: Container(
-            color: OndaTheme.card,
-            child: Icon(Icons.music_note,
-                size: currentSize * 0.35, color: OndaTheme.primary),
-          ),
+    Widget artwork;
+    if (customCoverPath != null && File(customCoverPath).existsSync()) {
+      artwork = Image.file(
+        File(customCoverPath),
+        width: currentSize,
+        height: currentSize,
+        fit: BoxFit.cover,
+      );
+    } else {
+      artwork = QueryArtworkWidget(
+        id: albumId,
+        type: ArtworkType.ALBUM,
+        artworkWidth: 300,
+        artworkHeight: 300,
+        artworkFit: BoxFit.cover,
+        keepOldArtwork: true,
+        nullArtworkWidget: Container(
+          color: OndaTheme.card,
+          child: Icon(Icons.music_note,
+              size: currentSize * 0.35, color: settings.primaryColor),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => _editCover(context, ref),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: currentSize,
+        height: currentSize,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: settings.primaryColor.withOpacity(isPlaying ? 0.35 : 0.15),
+              blurRadius: isPlaying ? 50 : 20,
+              spreadRadius: isPlaying ? 8 : 0,
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: artwork,
+              ),
+            ),
+            Positioned(
+              bottom: 12,
+              right: 12,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white24,
+                    width: 1.5,
+                  ),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(
+                    Icons.edit_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

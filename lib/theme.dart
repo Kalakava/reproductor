@@ -12,16 +12,15 @@ class OndaTheme {
   static const Color textSecondary = Color(0xFF94A3B8);
   static const Color divider = Color(0xFF1E1E30);
 
-  static ThemeData dark() {
-    final base = GoogleFonts.spaceGroteskTextTheme(
-      ThemeData.dark().textTheme,
-    ).apply(bodyColor: textPrimary, displayColor: textPrimary);
+  static ThemeData dark({Color primaryColor = primary, String fontFamily = 'Space Grotesk'}) {
+    final textTheme = GoogleFonts.getTextTheme(fontFamily, ThemeData.dark().textTheme)
+        .apply(bodyColor: textPrimary, displayColor: textPrimary);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        primary: primary,
+      colorScheme: ColorScheme.dark(
+        primary: primaryColor,
         secondary: accent,
         surface: surface,
         onPrimary: Colors.white,
@@ -29,13 +28,14 @@ class OndaTheme {
         onSurface: textPrimary,
       ),
       scaffoldBackgroundColor: bg,
-      textTheme: base,
+      textTheme: textTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: bg,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.spaceGrotesk(
+        titleTextStyle: GoogleFonts.getFont(
+          fontFamily,
           color: textPrimary,
           fontSize: 26,
           fontWeight: FontWeight.w700,
@@ -44,16 +44,16 @@ class OndaTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor: primary.withOpacity(0.2),
+        indicatorColor: primaryColor.withOpacity(0.2),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.spaceGrotesk(color: primary, fontSize: 12, fontWeight: FontWeight.w600);
+            return GoogleFonts.getFont(fontFamily, color: primaryColor, fontSize: 12, fontWeight: FontWeight.w600);
           }
-          return GoogleFonts.spaceGrotesk(color: textSecondary, fontSize: 12);
+          return GoogleFonts.getFont(fontFamily, color: textSecondary, fontSize: 12);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: primary);
+            return IconThemeData(color: primaryColor);
           }
           return const IconThemeData(color: textSecondary);
         }),
@@ -65,11 +65,11 @@ class OndaTheme {
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
-      sliderTheme: const SliderThemeData(
-        activeTrackColor: primary,
+      sliderTheme: SliderThemeData(
+        activeTrackColor: primaryColor,
         inactiveTrackColor: card,
-        thumbColor: primary,
-        overlayColor: Color(0x208B5CF6),
+        thumbColor: primaryColor,
+        overlayColor: primaryColor.withOpacity(0.12),
         trackHeight: 4,
       ),
       dialogTheme: const DialogThemeData(
@@ -88,7 +88,7 @@ class OndaTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),

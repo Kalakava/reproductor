@@ -4,6 +4,7 @@ import '../providers/player_provider.dart';
 import '../widgets/mini_player.dart';
 import 'songs_screen.dart';
 import 'playlists_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   static const _screens = [
     SongsScreen(),
     PlaylistsScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -52,6 +54,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icon(Icons.queue_music_outlined),
             selectedIcon: Icon(Icons.queue_music),
             label: 'Listas',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Ajustes',
           ),
         ],
       ),

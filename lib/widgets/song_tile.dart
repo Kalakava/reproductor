@@ -4,9 +4,11 @@ import 'package:on_audio_query/on_audio_query.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../theme.dart';
 import '../providers/library_provider.dart';
 import '../providers/playlist_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/library_service.dart';
 
 class SongTile extends ConsumerWidget {
@@ -61,9 +63,9 @@ class SongTile extends ConsumerWidget {
                         child: const Icon(Icons.check,
                             color: Colors.white, size: 24),
                       )
-                    : _Artwork(albumId: song.albumId ?? 0, size: 50),
+                    : _Artwork(albumId: song.albumId ?? 0, songId: song.id.toString(), size: 50),
               )
-            : _Artwork(albumId: song.albumId ?? 0, size: 50),
+            : _Artwork(albumId: song.albumId ?? 0, songId: song.id.toString(), size: 50),
         title: Text(
           song.title,
           maxLines: 1,
@@ -108,7 +110,7 @@ class SongTile extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Row(children: [
-                _Artwork(albumId: song.albumId ?? 0, size: 44),
+                _Artwork(albumId: song.albumId ?? 0, songId: song.id.toString(), size: 44),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -133,6 +135,16 @@ class SongTile extends ConsumerWidget {
                 OndaTheme.primary, () {
               Navigator.pop(ctx);
               _showAddToPlaylist(context, ref);
+            }),
+            _opt(ctx, Icons.edit_note_rounded, 'Renombrar canción',
+                OndaTheme.primary, () {
+              Navigator.pop(ctx);
+              _showRenameDialog(context, ref);
+            }),
+            _opt(ctx, Icons.photo_library_outlined, 'Cambiar carátula',
+                OndaTheme.primary, () {
+              Navigator.pop(ctx);
+              _changeCover(context, ref);
             }),
             _opt(ctx, Icons.share_outlined, 'Compartir archivo',
                 OndaTheme.primary, () async {
@@ -304,17 +316,113 @@ class SongTile extends ConsumerWidget {
       ),
     );
   }
+
+  void _changeCover(BuildContext context, WidgetRef ref) async {
+    final picker = ImagePicker();
+    try {
+      final image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        final compressedPath = await LibraryService.compressArtwork(image.path, song.id.toString());
+        if (compressedPath != null) {
+          await ref.read(settingsProvider.notifier).setCustomCover(song.id.toString(), compressedPath);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Carátula actualizada con éxito.')));
+          }
+        } else if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al procesar la carátula.')));
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  void _showRenameDialog(BuildContext context, WidgetRef ref) {
+    final titleController = TextEditingController(text: song.title);
+    final currentFileName = File(song.data).uri.pathSegments.last;
+    final fileController = TextEditingController(text: currentFileName);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Renombrar Canción'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: 'Título de la canción',
+                hintText: 'Ej. Mi Canción',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: fileController,
+              decoration: const InputDecoration(
+                labelText: 'Nombre del archivo',
+                hintText: 'Ej. cancion.mp3',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () async {
+              final newTitle = titleController.text.trim();
+              final newFileName = fileController.text.trim();
+              if (newTitle.isNotEmpty && newFileName.isNotEmpty) {
+                Navigator.pop(ctx);
+                final success = await ref
+                    .read(libraryProvider.notifier)
+                    .renameSong(song, newTitle, newFileName);
+                if (success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Canción renombrada correctamente.')));
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Error al renombrar el archivo. Verifica los permisos.')));
+                }
+              }
+            },
+            child: const Text('Renombrar'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─── Artwork helper ───────────────────────────────────────────────────────────
 
-class _Artwork extends StatelessWidget {
+class _Artwork extends ConsumerWidget {
   final int albumId;
+  final String songId;
   final double size;
-  const _Artwork({required this.albumId, required this.size});
+  const _Artwork({required this.albumId, required this.songId, required this.size});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final customCoverPath = settings.customCovers[songId];
+
+    if (customCoverPath != null && File(customCoverPath).existsSync()) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.18),
+        child: Image.file(
+          File(customCoverPath),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    final primaryColor = settings.primaryColor;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(size * 0.18),
       child: QueryArtworkWidget(
@@ -329,7 +437,7 @@ class _Artwork extends StatelessWidget {
           height: size,
           color: OndaTheme.card,
           child: Icon(Icons.music_note,
-              color: OndaTheme.primary, size: size * 0.45),
+              color: primaryColor, size: size * 0.45),
         ),
       ),
     );

@@ -1,7 +1,7 @@
 name: reproductor
 description: "Onda — Reproductor de música sin anuncios"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.2.0+3
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -34,6 +34,9 @@ dependencies:
 
   # Fuentes
   google_fonts: ^6.2.1
+
+  # Selección de imágenes de galería
+  image_picker: ^1.1.2
 
 dependency_overrides:
   on_audio_query_android:
