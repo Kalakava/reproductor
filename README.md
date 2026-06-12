@@ -47,7 +47,7 @@ Si deseas compilar la aplicación localmente en tu entorno de desarrollo, sigue 
 ## 👨‍💻 Autor y Soporte
 
 *   **Desarrollador:** Damián Arenas
-*   **Repositorio oficial:** [https://github.com/MataKbras/reproductor](https://github.com/MataKbras/reproductor)
+*   **Repositorio oficial:** [https://github.com/Kalakava/reproductor](https://github.com/Kalakava/reproductor)
 *   **Correo de contacto:** [kakalavacalexera@gmail.com](mailto:kakalavacalexera@gmail.com)
 
 ---

@@ -134,7 +134,7 @@ class CreditsScreen extends ConsumerWidget {
                     leading: const Icon(Icons.code_rounded, color: OndaTheme.primary),
                     title: const Text('Código fuente en GitHub'),
                     trailing: const Icon(Icons.chevron_right_rounded, color: OndaTheme.textSecondary),
-                    onTap: () => _launchUrl('https://github.com/MataKbras/reproductor'),
+                    onTap: () => _launchUrl('https://github.com/Kalakava/reproductor'),
                   ),
                   const SizedBox(height: 12),
                   ListTile(
