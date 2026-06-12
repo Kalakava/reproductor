@@ -241,33 +241,27 @@ class NowPlayingScreen extends ConsumerWidget {
               title: const Text('Compartir archivo'),
               onTap: () async {
                 Navigator.pop(ctx);
-                if (song.data != null) {
-                  await Share.shareXFiles([XFile(song.data!)], text: song.title);
-                }
+                await Share.shareXFiles([XFile(song.data)], text: song.title);
               },
             ),
             ListTile(
               leading: const Icon(Icons.folder_open_outlined,
                   color: OndaTheme.primary),
               title: const Text('Mostrar en carpeta'),
-              subtitle: song.data != null
-                  ? Text(File(song.data!).parent.path,
-                      style: const TextStyle(
-                          fontSize: 11, color: OndaTheme.textSecondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis)
-                  : null,
+              subtitle: Text(File(song.data).parent.path,
+                  style: const TextStyle(
+                      fontSize: 11, color: OndaTheme.textSecondary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
               onTap: () async {
                 Navigator.pop(ctx);
-                if (song.data != null) {
-                  final filePath = song.data!;
-                  final dir = File(filePath).parent.path;
-                  final success = await LibraryService.openFolder(filePath);
-                  if (!success && context.mounted) {
-                    final res = await OpenFilex.open(dir);
-                    if (res.type != ResultType.done && context.mounted) {
-                      _showPathDialog(context, dir);
-                    }
+                final filePath = song.data;
+                final dir = File(filePath).parent.path;
+                final success = await LibraryService.openFolder(filePath);
+                if (!success && context.mounted) {
+                  final res = await OpenFilex.open(dir);
+                  if (res.type != ResultType.done && context.mounted) {
+                    _showPathDialog(context, dir);
                   }
                 }
               },

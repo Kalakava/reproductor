@@ -137,9 +137,7 @@ class SongTile extends ConsumerWidget {
             _opt(ctx, Icons.share_outlined, 'Compartir archivo',
                 OndaTheme.primary, () async {
               Navigator.pop(ctx);
-              if (song.data != null) {
-                await Share.shareXFiles([XFile(song.data!)], text: song.title);
-              }
+              await Share.shareXFiles([XFile(song.data)], text: song.title);
             }),
             _opt(ctx, Icons.folder_open_outlined, 'Mostrar en carpeta',
                 OndaTheme.primary, () {
@@ -182,8 +180,7 @@ class SongTile extends ConsumerWidget {
   }
 
   void _showInFolder(BuildContext context) async {
-    if (song.data == null) return;
-    final filePath = song.data!;
+    final filePath = song.data;
     final dir = File(filePath).parent.path;
     final success = await LibraryService.openFolder(filePath);
     if (!success && context.mounted) {

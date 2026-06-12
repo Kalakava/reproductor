@@ -62,9 +62,8 @@ class LibraryService {
   // Borra el archivo directamente. En Android 11+ puede requerir
   // permiso adicional; si falla devuelve false y el UI lo indica.
   static Future<bool> deleteSong(BuildContext context, SongModel song) async {
-    if (song.data == null) return false;
     try {
-      final file = File(song.data!);
+      final file = File(song.data);
       if (await file.exists()) {
         await file.delete();
         return true;
