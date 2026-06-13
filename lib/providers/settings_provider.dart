@@ -13,6 +13,7 @@ class SettingsState {
   final double eqMid;
   final double eqTreble;
   final Map<String, String> customCovers; // songId -> local compressedWebPCoverPath
+  final bool showSettingsGlow;
 
   const SettingsState({
     this.fontFamily = 'Roboto',
@@ -23,6 +24,7 @@ class SettingsState {
     this.eqMid = 0.0,
     this.eqTreble = 0.0,
     this.customCovers = const {},
+    this.showSettingsGlow = false,
   });
 
   Color get primaryColor => Color(primaryColorValue);
@@ -36,6 +38,7 @@ class SettingsState {
     double? eqMid,
     double? eqTreble,
     Map<String, String>? customCovers,
+    bool? showSettingsGlow,
   }) =>
       SettingsState(
         fontFamily: fontFamily ?? this.fontFamily,
@@ -46,6 +49,7 @@ class SettingsState {
         eqMid: eqMid ?? this.eqMid,
         eqTreble: eqTreble ?? this.eqTreble,
         customCovers: customCovers ?? this.customCovers,
+        showSettingsGlow: showSettingsGlow ?? this.showSettingsGlow,
       );
 }
 
@@ -58,6 +62,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   static const _prefEqMid = 'onda_eq_mid';
   static const _prefEqTreble = 'onda_eq_treble';
   static const _prefCovers = 'onda_custom_covers';
+  static const _prefLastVisit = 'onda_last_settings_visit';
 
   final Ref _ref;
   late final SharedPreferences _prefs;
@@ -84,6 +89,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       } catch (_) {}
     }
 
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final lastVisit = _prefs.getString(_prefLastVisit);
+    final showGlow = lastVisit != today;
+
     state = SettingsState(
       fontFamily: font,
       primaryColorValue: colorVal,
@@ -93,6 +102,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       eqMid: eqMid,
       eqTreble: eqTreble,
       customCovers: covers,
+      showSettingsGlow: showGlow,
     );
     _syncEqualizer();
   }
@@ -151,6 +161,13 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     }
     state = state.copyWith(customCovers: updated);
     await _prefs.setString(_prefCovers, jsonEncode(updated));
+  }
+
+  Future<void> markSettingsVisited() async {
+    if (!state.showSettingsGlow) return;
+    state = state.copyWith(showSettingsGlow: false);
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    await _prefs.setString(_prefLastVisit, today);
   }
 }
 

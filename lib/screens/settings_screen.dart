@@ -122,11 +122,35 @@ class SettingsScreen extends ConsumerWidget {
                       value: settings.fontFamily,
                       dropdownColor: OndaTheme.card,
                       underline: const SizedBox(),
-                      items: const [
-                        DropdownMenuItem(value: 'Roboto', child: Text('Roboto')),
-                        DropdownMenuItem(value: 'Inter', child: Text('Inter')),
-                        DropdownMenuItem(value: 'Montserrat', child: Text('Montserrat')),
-                        DropdownMenuItem(value: 'Poppins', child: Text('Poppins')),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'Roboto',
+                          child: Text('Roboto', style: GoogleFonts.roboto(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Inter',
+                          child: Text('Inter', style: GoogleFonts.inter(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Montserrat',
+                          child: Text('Montserrat', style: GoogleFonts.montserrat(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Poppins',
+                          child: Text('Poppins', style: GoogleFonts.poppins(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Germania One',
+                          child: Text('Germania One', style: GoogleFonts.germaniaOne(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'MedievalSharp',
+                          child: Text('MedievalSharp', style: GoogleFonts.medievalSharp(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Cinzel',
+                          child: Text('Cinzel', style: GoogleFonts.cinzel(color: OndaTheme.textPrimary)),
+                        ),
                       ],
                       onChanged: (font) {
                         if (font != null) {
