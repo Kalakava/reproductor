@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,10 @@ import '../providers/theme_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/library_service.dart';
 import '../theme.dart';
+
+final albumArtworkProvider = FutureProvider.family<Uint8List?, int>((ref, albumId) async {
+  return OnAudioQuery().queryArtwork(albumId, ArtworkType.ALBUM);
+});
 
 class NowPlayingScreen extends ConsumerWidget {
   const NowPlayingScreen({super.key});
@@ -475,30 +480,6 @@ class _AlbumArt extends ConsumerWidget {
     final double maxSize = (screenHeight * 0.35).clamp(160.0, 280.0);
     final double currentSize = isPlaying ? maxSize : maxSize * 0.85;
 
-    Widget artwork;
-    if (customCoverPath != null && File(customCoverPath).existsSync()) {
-      artwork = Image.file(
-        File(customCoverPath),
-        width: currentSize,
-        height: currentSize,
-        fit: BoxFit.cover,
-      );
-    } else {
-      artwork = QueryArtworkWidget(
-        id: albumId,
-        type: ArtworkType.ALBUM,
-        artworkWidth: 300,
-        artworkHeight: 300,
-        artworkFit: BoxFit.cover,
-        keepOldArtwork: true,
-        nullArtworkWidget: Container(
-          color: OndaTheme.card,
-          child: Icon(Icons.music_note,
-              size: currentSize * 0.35, color: settings.primaryColor),
-        ),
-      );
-    }
-
     return GestureDetector(
       onTap: () => _editCover(context, ref),
       child: AnimatedContainer(
@@ -520,7 +501,7 @@ class _AlbumArt extends ConsumerWidget {
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(28),
-                child: artwork,
+                child: _buildArtworkContent(context, ref, customCoverPath, settings.primaryColor, currentSize),
               ),
             ),
             Positioned(
@@ -546,6 +527,96 @@ class _AlbumArt extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArtworkContent(
+    BuildContext context,
+    WidgetRef ref,
+    String? customCoverPath,
+    Color primaryColor,
+    double currentSize,
+  ) {
+    if (customCoverPath != null && File(customCoverPath).existsSync()) {
+      final file = File(customCoverPath);
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          // Fondo difuminado (BoxFit.cover)
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Opacity(
+              opacity: 0.45,
+              child: Image.file(
+                file,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          // Imagen en primer plano (BoxFit.contain)
+          Center(
+            child: Image.file(
+              file,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Si es de la biblioteca de Android (MediaStore)
+    final artworkAsync = ref.watch(albumArtworkProvider(albumId));
+
+    return artworkAsync.when(
+      data: (bytes) {
+        if (bytes == null || bytes.isEmpty) {
+          return Container(
+            color: OndaTheme.card,
+            child: Icon(
+              Icons.music_note,
+              size: currentSize * 0.35,
+              color: primaryColor,
+            ),
+          );
+        }
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            // Fondo difuminado (BoxFit.cover)
+            ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Opacity(
+                opacity: 0.45,
+                child: Image.memory(
+                  bytes,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            // Imagen en primer plano (BoxFit.contain)
+            Center(
+              child: Image.memory(
+                bytes,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => Container(
+        color: OndaTheme.card,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (_, __) => Container(
+        color: OndaTheme.card,
+        child: Icon(
+          Icons.music_note,
+          size: currentSize * 0.35,
+          color: primaryColor,
         ),
       ),
     );

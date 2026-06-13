@@ -58,65 +58,7 @@ class SettingsScreen extends ConsumerWidget {
           const _RemoteBanner(),
           const SizedBox(height: 16),
 
-          // Tarjeta 1: Ecualizador
-          _buildCard(
-            title: 'Ecualizador de Audio',
-            icon: Icons.equalizer_rounded,
-            settings: settings,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Activar Ecualizador', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Ajusta frecuencias nativas en Android', style: TextStyle(fontSize: 12, color: OndaTheme.textSecondary)),
-                  value: settings.eqEnabled,
-                  onChanged: (val) async {
-                    await ref.read(settingsProvider.notifier).setEqEnabled(val);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(val
-                              ? 'Ecualizador activado. Reinicia la app para aplicar el efecto.'
-                              : 'Ecualizador desactivado. Reinicia la app para limpiar el canal de audio.'),
-                          duration: const Duration(seconds: 4),
-                        ),
-                      );
-                    }
-                  },
-                ),
-                if (settings.eqEnabled) ...[
-                  const Divider(color: OndaTheme.divider, height: 24),
-                  const Text('Presets por Estilo', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: OndaTheme.textSecondary)),
-                  const SizedBox(height: 10),
-                  _buildEqualizerPresets(ref, settings),
-                  const SizedBox(height: 16),
-                  _buildSlider(
-                    label: 'Bajos (Bass)',
-                    value: settings.eqBass,
-                    onChanged: (val) {
-                      ref.read(settingsProvider.notifier).setEqValues(val, settings.eqMid, settings.eqTreble);
-                    },
-                  ),
-                  _buildSlider(
-                    label: 'Medios (Mids)',
-                    value: settings.eqMid,
-                    onChanged: (val) {
-                      ref.read(settingsProvider.notifier).setEqValues(settings.eqBass, val, settings.eqTreble);
-                    },
-                  ),
-                  _buildSlider(
-                    label: 'Agudos (Treble)',
-                    value: settings.eqTreble,
-                    onChanged: (val) {
-                      ref.read(settingsProvider.notifier).setEqValues(settings.eqBass, settings.eqMid, val);
-                    },
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
+
 
           // Tarjeta 2: Personalización
           _buildCard(
@@ -222,7 +164,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           _buildSleepTimerCard(ref, settings),
-          const SizedBox(height: 40),
+          SizedBox(height: ref.watch(playerProvider.select((s) => s.currentSong != null)) ? 110 : 40),
         ],
       ),
     );
@@ -265,84 +207,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSlider({
-    required String label,
-    required double value,
-    required ValueChanged<double> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 12, color: OndaTheme.textSecondary)),
-              Text('${value >= 0 ? '+' : ''}${value.toStringAsFixed(1)} dB',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Slider(
-            value: value,
-            min: -10.0,
-            max: 10.0,
-            divisions: 20,
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildEqualizerPresets(WidgetRef ref, SettingsState settings) {
-    final presets = {
-      'Plano': [0.0, 0.0, 0.0],
-      'Rap': [6.0, 1.0, -1.0],
-      'Rock': [4.0, -2.0, 5.0],
-      'Metal': [5.0, -4.0, 4.0],
-      'Indie': [2.0, 3.0, 1.0],
-      'Pop': [3.0, 2.0, 2.0],
-    };
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: presets.keys.map((name) {
-          final values = presets[name]!;
-          final isSelected = settings.eqBass == values[0] &&
-              settings.eqMid == values[1] &&
-              settings.eqTreble == values[2];
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(name, style: const TextStyle(fontSize: 12)),
-              selected: isSelected,
-              selectedColor: settings.primaryColor.withOpacity(0.3),
-              backgroundColor: OndaTheme.card,
-              labelStyle: TextStyle(
-                color: isSelected ? settings.primaryColor : OndaTheme.textPrimary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(
-                  color: isSelected ? settings.primaryColor : OndaTheme.divider,
-                  width: 1,
-                ),
-              ),
-              onSelected: (selected) {
-                if (selected) {
-                  ref.read(settingsProvider.notifier).setEqValues(values[0], values[1], values[2]);
-                }
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
 
   Widget _buildColorChooser(WidgetRef ref, SettingsState settings) {
     final colors = [

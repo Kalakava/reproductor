@@ -18,16 +18,12 @@ Future<void> main() async {
     ),
   );
 
-  // Cargar si el ecualizador está activado para decidir si inicializar su pipeline
-  final prefs = await SharedPreferences.getInstance();
-  final eqEnabled = prefs.getBool('onda_eq_enabled') ?? false;
-
   // Inicializar audio_service para controles en notificación y pantalla bloqueada.
   // Si falla (dispositivo incompatible), la app sigue funcionando sin notificación.
   OndaAudioHandler? handler;
   try {
     handler = await AudioService.init(
-      builder: () => OndaAudioHandler(enableEqPipeline: eqEnabled),
+      builder: () => OndaAudioHandler(),
       config: const AudioServiceConfig(
         androidNotificationChannelId: 'io.onda.music.audio',
         androidNotificationChannelName: 'Onda',
