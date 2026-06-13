@@ -4,7 +4,6 @@ import 'package:on_audio_query/on_audio_query.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../providers/playlist_provider.dart';
-import '../models/playlist.dart';
 import '../theme.dart';
 import '../widgets/song_tile.dart';
 import 'now_playing_screen.dart';

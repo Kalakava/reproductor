@@ -1,12 +1,17 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Handler que envuelve [AudioPlayer] y expone los controles de medios
 /// al sistema Android (notificación, pantalla de bloqueo, Bluetooth).
 class OndaAudioHandler extends BaseAudioHandler with SeekHandler {
   late final AudioPlayer _player;
   AndroidEqualizer? _equalizer;
+  List<AndroidEqualizerBand>? _cachedBands;
+  bool _isInitializingBands = false;
+  bool? _lastEqEnabled;
 
   OndaAudioHandler({bool enableEqPipeline = false}) {
     if (enableEqPipeline) {
@@ -34,22 +39,61 @@ class OndaAudioHandler extends BaseAudioHandler with SeekHandler {
   /// Acceso al [AudioPlayer] subyacente para los listeners de la UI.
   AudioPlayer get player => _player;
 
+  Future<void> _ensureBandsInitialized() async {
+    if (_cachedBands != null || _equalizer == null || _isInitializingBands) return;
+    _isInitializingBands = true;
+    try {
+      final params = await _equalizer!.parameters;
+      _cachedBands = params.bands;
+      debugPrint('[Onda] Bandas del ecualizador cargadas con éxito: ${_cachedBands?.length}');
+    } catch (e) {
+      debugPrint('[Onda] Error al inicializar bandas del ecualizador: $e');
+    } finally {
+      _isInitializingBands = false;
+    }
+  }
+
   /// Actualiza las ganancias del ecualizador nativo
   Future<void> updateEqualizer(bool enabled, double bass, double mid, double treble) async {
+    if (_equalizer == null) return;
     try {
-      await _equalizer?.setEnabled(enabled);
+      if (_lastEqEnabled != enabled) {
+        await _equalizer!.setEnabled(enabled);
+        _lastEqEnabled = enabled;
+        debugPrint('[Onda] Ecualizador ${enabled ? "activado" : "desactivado"}');
+      }
       if (enabled) {
-        final params = await _equalizer?.parameters;
-        final bands = params?.bands;
+        await _ensureBandsInitialized();
+        final bands = _cachedBands;
         if (bands != null && bands.isNotEmpty) {
-          if (bands.length > 0) await bands[0].setGain(bass);
-          if (bands.length > 1) await bands[1].setGain(bass * 0.7);
-          if (bands.length > 2) await bands[2].setGain(mid);
-          if (bands.length > 3) await bands[3].setGain(treble * 0.7);
-          if (bands.length > 4) await bands[4].setGain(treble);
+          // Aplicar ganancias de forma asíncrona sin bloquear el event loop
+          if (bands.isNotEmpty) bands[0].setGain(bass);
+          if (bands.length > 1) bands[1].setGain(bass * 0.7);
+          if (bands.length > 2) bands[2].setGain(mid);
+          if (bands.length > 3) bands[3].setGain(treble * 0.7);
+          if (bands.length > 4) bands[4].setGain(treble);
+          debugPrint('[Onda] Ganancias aplicadas -> Bass: $bass dB, Mid: $mid dB, Treble: $treble dB');
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[Onda] Error al actualizar ecualizador: $e');
+    }
+  }
+
+  /// Carga y aplica los ajustes del ecualizador guardados en SharedPreferences
+  Future<void> applySavedEqualizerSettings() async {
+    if (_equalizer == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final enabled = prefs.getBool('onda_eq_enabled') ?? false;
+      final bass = prefs.getDouble('onda_eq_bass') ?? 0.0;
+      final mid = prefs.getDouble('onda_eq_mid') ?? 0.0;
+      final treble = prefs.getDouble('onda_eq_treble') ?? 0.0;
+      
+      await updateEqualizer(enabled, bass, mid, treble);
+    } catch (e) {
+      debugPrint('[Onda] Error al aplicar ajustes guardados del ecualizador: $e');
+    }
   }
 
   // ── Cargar cola ────────────────────────────────────────────────────────────
@@ -57,7 +101,7 @@ class OndaAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> setQueue(List<SongModel> songs, {int initialIndex = 0}) async {
     final sources = songs
         .map((s) => AudioSource.uri(
-              s.uri != null ? Uri.parse(s.uri!) : Uri.file(s.data ?? ''),
+              s.uri != null ? Uri.parse(s.uri!) : Uri.file(s.data),
             ))
         .toList();
 
@@ -79,6 +123,9 @@ class OndaAudioHandler extends BaseAudioHandler with SeekHandler {
       ConcatenatingAudioSource(children: sources),
       initialIndex: initialIndex.clamp(0, songs.length - 1),
     );
+
+    // Aplicar el ecualizador una vez que la sesión de audio está activa
+    await applySavedEqualizerSettings();
   }
 
   // ── Controles estándar ─────────────────────────────────────────────────────

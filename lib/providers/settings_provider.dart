@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,6 +67,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   final Ref _ref;
   late final SharedPreferences _prefs;
+  Timer? _eqDebounceTimer;
 
   SettingsNotifier(this._ref) : super(const SettingsState()) {
     _init();
@@ -144,12 +146,25 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     _syncEqualizer();
   }
 
-  Future<void> setEqValues(double bass, double mid, double treble) async {
+  void setEqValues(double bass, double mid, double treble) {
     state = state.copyWith(eqBass: bass, eqMid: mid, eqTreble: treble);
-    await _prefs.setDouble(_prefEqBass, bass);
-    await _prefs.setDouble(_prefEqMid, mid);
-    await _prefs.setDouble(_prefEqTreble, treble);
-    _syncEqualizer();
+    _eqDebounceTimer?.cancel();
+    _eqDebounceTimer = Timer(const Duration(milliseconds: 100), () async {
+      try {
+        await _prefs.setDouble(_prefEqBass, bass);
+        await _prefs.setDouble(_prefEqMid, mid);
+        await _prefs.setDouble(_prefEqTreble, treble);
+        _syncEqualizer();
+      } catch (e) {
+        debugPrint('[Onda] Error al guardar valores de ecualizador: $e');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _eqDebounceTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> setCustomCover(String songId, String? localPath) async {
