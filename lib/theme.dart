@@ -12,7 +12,7 @@ class OndaTheme {
   static const Color textSecondary = Color(0xFF94A3B8);
   static const Color divider = Color(0xFF1E1E30);
 
-  static ThemeData dark({Color primaryColor = primary, String fontFamily = 'Space Grotesk'}) {
+  static ThemeData dark({Color primaryColor = primary, String fontFamily = 'Roboto'}) {
     final textTheme = GoogleFonts.getTextTheme(fontFamily, ThemeData.dark().textTheme)
         .apply(bodyColor: textPrimary, displayColor: textPrimary);
 

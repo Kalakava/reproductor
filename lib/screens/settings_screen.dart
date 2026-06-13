@@ -123,7 +123,6 @@ class SettingsScreen extends ConsumerWidget {
                       dropdownColor: OndaTheme.card,
                       underline: const SizedBox(),
                       items: const [
-                        DropdownMenuItem(value: 'Space Grotesk', child: Text('Space Grotesk')),
                         DropdownMenuItem(value: 'Roboto', child: Text('Roboto')),
                         DropdownMenuItem(value: 'Inter', child: Text('Inter')),
                         DropdownMenuItem(value: 'Montserrat', child: Text('Montserrat')),

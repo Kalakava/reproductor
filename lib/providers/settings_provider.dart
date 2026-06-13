@@ -15,7 +15,7 @@ class SettingsState {
   final Map<String, String> customCovers; // songId -> local compressedWebPCoverPath
 
   const SettingsState({
-    this.fontFamily = 'SpaceGrotesk',
+    this.fontFamily = 'Roboto',
     this.primaryColorValue = 0xFF8B5CF6,
     this.backgroundImagePath,
     this.eqEnabled = false,
@@ -68,7 +68,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   Future<void> _init() async {
     _prefs = await SharedPreferences.getInstance();
-    final font = _prefs.getString(_prefFont) ?? 'SpaceGrotesk';
+    final font = _prefs.getString(_prefFont) ?? 'Roboto';
     final colorVal = _prefs.getInt(_prefColor) ?? 0xFF8B5CF6;
     final bgImage = _prefs.getString(_prefBgImage);
     final eqEnabled = _prefs.getBool(_prefEqEnabled) ?? false;
