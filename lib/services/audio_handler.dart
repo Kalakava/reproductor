@@ -8,12 +8,14 @@ class OndaAudioHandler extends BaseAudioHandler with SeekHandler {
   late final AudioPlayer _player;
   AndroidEqualizer? _equalizer;
 
-  OndaAudioHandler() {
-    _equalizer = AndroidEqualizer();
+  OndaAudioHandler({bool enableEqPipeline = false}) {
+    if (enableEqPipeline) {
+      _equalizer = AndroidEqualizer();
+    }
     _player = AudioPlayer(
       audioPipeline: AudioPipeline(
         androidAudioEffects: [
-          _equalizer!,
+          if (_equalizer != null) _equalizer!,
         ],
       ),
     );

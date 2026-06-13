@@ -70,7 +70,19 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Activar Ecualizador', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   subtitle: const Text('Ajusta frecuencias nativas en Android', style: TextStyle(fontSize: 12, color: OndaTheme.textSecondary)),
                   value: settings.eqEnabled,
-                  onChanged: (val) => ref.read(settingsProvider.notifier).setEqEnabled(val),
+                  onChanged: (val) async {
+                    await ref.read(settingsProvider.notifier).setEqEnabled(val);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(val
+                              ? 'Ecualizador activado. Reinicia la app para aplicar el efecto.'
+                              : 'Ecualizador desactivado. Reinicia la app para limpiar el canal de audio.'),
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  },
                 ),
                 if (settings.eqEnabled) ...[
                   const Divider(color: OndaTheme.divider, height: 24),
