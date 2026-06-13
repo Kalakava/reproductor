@@ -67,10 +67,31 @@ class MainActivity : AudioServiceFragmentActivity() {
                         result.error("BAD_ARGS", "Missing arguments", null)
                     }
                 }
+                "openUrl" -> {
+                    val url = call.argument<String>("url")
+                    if (url != null) {
+                        val opened = openUrlInBrowser(url)
+                        result.success(opened)
+                    } else {
+                        result.error("BAD_ARGS", "Url is null", null)
+                    }
+                }
                 else -> {
                     result.notImplemented()
                 }
             }
+        }
+    }
+
+    private fun openUrlInBrowser(url: String): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 

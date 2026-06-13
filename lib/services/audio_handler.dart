@@ -18,6 +18,7 @@ class OndaAudioHandler extends BaseAudioHandler with SeekHandler {
       _equalizer = AndroidEqualizer();
     }
     _player = AudioPlayer(
+      androidOffloadSchedulingEnabled: false,
       audioPipeline: AudioPipeline(
         androidAudioEffects: [
           if (_equalizer != null) _equalizer!,

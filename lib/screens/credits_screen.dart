@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:open_filex/open_filex.dart';
+import '../services/library_service.dart';
 import '../providers/theme_provider.dart';
 import '../theme.dart';
 
@@ -9,7 +9,7 @@ class CreditsScreen extends ConsumerWidget {
 
   Future<void> _launchUrl(String url) async {
     try {
-      await OpenFilex.open(url);
+      await LibraryService.openUrl(url);
     } catch (_) {}
   }
 
@@ -72,7 +72,7 @@ class CreditsScreen extends ConsumerWidget {
                     ),
                   ),
                   const Text(
-                    'Versión 1.0.0',
+                    'Versión 1.2.0',
                     style: TextStyle(
                       fontSize: 14,
                       color: OndaTheme.textSecondary,
@@ -135,17 +135,6 @@ class CreditsScreen extends ConsumerWidget {
                     title: const Text('Código fuente en GitHub'),
                     trailing: const Icon(Icons.chevron_right_rounded, color: OndaTheme.textSecondary),
                     onTap: () => _launchUrl('https://github.com/Kalakava/reproductor'),
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    tileColor: OndaTheme.card.withOpacity(0.5),
-                    leading: const Icon(Icons.mail_outline_rounded, color: OndaTheme.primary),
-                    title: const Text('Contactar por correo'),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: OndaTheme.textSecondary),
-                    onTap: () => _launchUrl('mailto:kakalavacalexera@gmail.com'),
                   ),
                   const SizedBox(height: 40),
                   // Pie de página

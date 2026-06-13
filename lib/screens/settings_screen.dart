@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import '../services/library_service.dart';
+import '../providers/sleep_timer_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/player_provider.dart';
 import '../providers/theme_provider.dart';
@@ -219,6 +220,8 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          _buildSleepTimerCard(ref, settings),
           const SizedBox(height: 40),
         ],
       ),
@@ -394,6 +397,99 @@ class SettingsScreen extends ConsumerWidget {
       }
     } catch (_) {}
   }
+
+  Widget _buildSleepTimerCard(WidgetRef ref, SettingsState settings) {
+    final sleepTimer = ref.watch(sleepTimerProvider);
+
+    String formatDuration(Duration? duration) {
+      if (duration == null) return '';
+      final hours = duration.inHours;
+      final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+      final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+      if (hours > 0) {
+        return '$hours:$minutes:$seconds';
+      } else {
+        return '$minutes:$seconds';
+      }
+    }
+
+    final presets = {
+      '15 min': const Duration(minutes: 15),
+      '30 min': const Duration(minutes: 30),
+      '60 min': const Duration(minutes: 60),
+      '2 h': const Duration(hours: 2),
+      '3 h': const Duration(hours: 3),
+    };
+
+    return _buildCard(
+      title: 'Temporizador de Apagado',
+      icon: Icons.timer_outlined,
+      settings: settings,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sleepTimer.isActive
+                          ? 'Apagando en: ${formatDuration(sleepTimer.remainingTime)}'
+                          : 'Temporizador inactivo',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Pausa la música al finalizar el tiempo',
+                      style: TextStyle(fontSize: 11, color: OndaTheme.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              if (sleepTimer.isActive)
+                TextButton.icon(
+                  onPressed: () {
+                    ref.read(sleepTimerProvider.notifier).cancelTimer();
+                  },
+                  icon: const Icon(Icons.cancel_outlined, size: 16, color: Colors.redAccent),
+                  label: const Text('Cancelar', style: TextStyle(fontSize: 12, color: Colors.redAccent)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: presets.keys.map((name) {
+                final duration = presets[name]!;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ActionChip(
+                    label: Text(name, style: const TextStyle(fontSize: 12)),
+                    backgroundColor: OndaTheme.card,
+                    labelStyle: TextStyle(
+                      color: settings.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: const BorderSide(color: OndaTheme.divider, width: 1),
+                    ),
+                    onPressed: () {
+                      ref.read(sleepTimerProvider.notifier).setTimer(duration);
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─── Banner Remoto / Push publicitario del desarrollador ───────────────────────
@@ -457,7 +553,7 @@ class _RemoteBannerState extends State<_RemoteBanner> {
 
   Future<void> _launchUrl(String url) async {
     try {
-      await OpenFilex.open(url);
+      await LibraryService.openUrl(url);
     } catch (_) {}
   }
 
@@ -595,6 +691,29 @@ class _RemoteBannerState extends State<_RemoteBanner> {
                               }
                             },
                           ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(color: OndaTheme.divider, height: 1),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.security_rounded,
+                          size: 14,
+                          color: OndaTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Privacidad total: Onda no recopila ninguna información, datos de uso o analíticas.',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: OndaTheme.textSecondary.withOpacity(0.8),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ],

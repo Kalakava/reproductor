@@ -109,5 +109,16 @@ class LibraryService {
       return null;
     }
   }
+
+  // Abre una URL externa (web o mailto) en el navegador del dispositivo nativamente
+  static Future<bool> openUrl(String url) async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final bool success = await _channel.invokeMethod('openUrl', {'url': url});
+      return success;
+    } catch (_) {
+      return false;
+    }
+  }
 }
 
