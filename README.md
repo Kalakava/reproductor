@@ -52,11 +52,6 @@ Si deseas compilar la aplicación localmente en tu entorno de desarrollo, sigue 
 
 ---
 
-## ⚖️ Licencia (GPL v3)
+## ⚖️ Licencia
 
-Este proyecto se distribuye bajo la licencia **GNU General Public License v3.0 (GPL v3)**.
-
-> [!IMPORTANT]
-> **Condiciones Obligatorias:**
-> 1.  **Obligada mención (Atribución):** Se deben mantener de forma visible todos los créditos de autoría del desarrollador original en cualquier redistribución o interfaz.
-> 2.  **Obligado Open Source (Copyleft):** Si decides bifurcar (fork) este repositorio, modificar el código o utilizarlo en tu propio proyecto, **estás obligado** a liberar tu código fuente bajo la misma licencia libre y abierta (GPL v3).
+Copyright (c) 2026 Damián Arenas. Todos los derechos reservados. Licencia comercial y propietaria. Queda prohibida la reproducción, distribución, copia, traducción o modificación no autorizada de este código fuente.

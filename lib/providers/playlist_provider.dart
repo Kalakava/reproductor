@@ -18,6 +18,12 @@ class PlaylistNotifier extends StateNotifier<List<Playlist>> {
     await _save();
   }
 
+  Future<void> createWithSongs(String name, List<int> songIds) async {
+    final playlist = Playlist.create(name).copyWith(songIds: songIds);
+    state = [...state, playlist];
+    await _save();
+  }
+
   Future<void> rename(String id, String name) async {
     state = [for (final p in state) if (p.id == id) p.copyWith(name: name) else p];
     await _save();

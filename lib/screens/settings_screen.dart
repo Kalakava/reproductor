@@ -380,10 +380,10 @@ class _RemoteBannerState extends State<_RemoteBanner> {
     // Configuración por defecto local
     final fallback = {
       'show_banner': true,
-      'title': 'Desarrollado por Damián Arenas',
-      'message': 'Onda es un reproductor de música local moderno, libre de anuncios y de código abierto. ¡Gracias por usar la aplicación!',
-      'action_text': 'Ver en GitHub',
-      'action_url': 'https://github.com/Kalakava/reproductor',
+      'title': 'Onda Premium',
+      'message': 'Onda es tu reproductor de música local moderno, rápido y libre de anuncios. Gracias por apoyar a Damián Arenas en el desarrollo.',
+      'action_text': null,
+      'action_url': null,
     };
 
     try {

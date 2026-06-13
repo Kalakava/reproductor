@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/library_service.dart';
 import '../providers/theme_provider.dart';
 import '../theme.dart';
 
 class CreditsScreen extends ConsumerWidget {
   const CreditsScreen({super.key});
 
-  Future<void> _launchUrl(String url) async {
-    try {
-      await LibraryService.openUrl(url);
-    } catch (_) {}
-  }
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -125,18 +120,7 @@ class CreditsScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Botones de Enlace / Redes
-                  ListTile(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    tileColor: OndaTheme.card.withOpacity(0.5),
-                    leading: const Icon(Icons.code_rounded, color: OndaTheme.primary),
-                    title: const Text('Código fuente en GitHub'),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: OndaTheme.textSecondary),
-                    onTap: () => _launchUrl('https://github.com/Kalakava/reproductor'),
-                  ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 16),
                   // Pie de página
                   Text(
                     '© 2026 Damián Arenas. Todos los derechos reservados.',

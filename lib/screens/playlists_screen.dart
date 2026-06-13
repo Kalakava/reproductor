@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 import '../models/playlist.dart';
+import '../providers/library_provider.dart';
 import '../providers/playlist_provider.dart';
 import '../theme.dart';
 import 'playlist_detail_screen.dart';
@@ -30,6 +33,57 @@ class PlaylistsScreen extends ConsumerWidget {
   }
 
   void _showCreateDialog(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: OndaTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: OndaTheme.textSecondary.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Crear nueva lista',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: OndaTheme.textPrimary),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.playlist_add_rounded, color: OndaTheme.primary),
+              title: const Text('Crear lista vacía', style: TextStyle(color: OndaTheme.textPrimary)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showNameDialog(context, ref);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_open_rounded, color: OndaTheme.primary),
+              title: const Text('Crear desde carpeta', style: TextStyle(color: OndaTheme.textPrimary)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showFolderPlaylistSheet(context, ref);
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNameDialog(BuildContext context, WidgetRef ref) {
     final ctrl = TextEditingController();
     showDialog(
       context: context,
@@ -58,6 +112,102 @@ class PlaylistsScreen extends ConsumerWidget {
     if (name.isEmpty) return;
     ref.read(playlistProvider.notifier).create(name);
     Navigator.pop(ctx);
+  }
+
+  void _showFolderPlaylistSheet(BuildContext context, WidgetRef ref) {
+    final songs = ref.read(libraryProvider).songs;
+    
+    // Agrupar canciones por directorio padre
+    final Map<String, List<SongModel>> folderMap = {};
+    for (final song in songs) {
+      final parentPath = File(song.data).parent.path;
+      if (!folderMap.containsKey(parentPath)) {
+        folderMap[parentPath] = [];
+      }
+      folderMap[parentPath]!.add(song);
+    }
+
+    final folderPaths = folderMap.keys.toList()..sort((a, b) {
+      final nameA = a.split('/').last.toLowerCase();
+      final nameB = b.split('/').last.toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: OndaTheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, sc) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: OndaTheme.textSecondary.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Seleccionar carpeta',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: OndaTheme.textPrimary),
+              ),
+            ),
+            Expanded(
+              child: folderPaths.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No se encontraron carpetas con música.',
+                        style: TextStyle(color: OndaTheme.textSecondary),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: sc,
+                      itemCount: folderPaths.length,
+                      itemBuilder: (context, index) {
+                        final path = folderPaths[index];
+                        final folderName = path.split('/').last;
+                        final folderSongs = folderMap[path]!;
+
+                        return ListTile(
+                          leading: const Icon(Icons.folder, color: OndaTheme.primary),
+                          title: Text(folderName, style: const TextStyle(color: OndaTheme.textPrimary)),
+                          subtitle: Text(
+                            '${folderSongs.length} canciones • $path',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: OndaTheme.textSecondary, fontSize: 11),
+                          ),
+                          onTap: () {
+                            final songIds = folderSongs.map((s) => s.id).toList();
+                            ref.read(playlistProvider.notifier).createWithSongs(folderName, songIds);
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Lista "$folderName" creada con ${songIds.length} canciones'),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
