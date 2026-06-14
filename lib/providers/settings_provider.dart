@@ -10,6 +10,7 @@ class SettingsState {
   final String? backgroundImagePath;
   final Map<String, String> customCovers; // songId -> local compressedWebPCoverPath
   final bool showSettingsGlow;
+  final String languageCode; // 'system', 'es', 'en', 'fr', 'it', 'pt', 'zh_Hans'
 
   const SettingsState({
     this.fontFamily = 'Roboto',
@@ -17,6 +18,7 @@ class SettingsState {
     this.backgroundImagePath,
     this.customCovers = const {},
     this.showSettingsGlow = false,
+    this.languageCode = 'system',
   });
 
   Color get primaryColor => Color(primaryColorValue);
@@ -27,6 +29,7 @@ class SettingsState {
     String? backgroundImagePath,
     Map<String, String>? customCovers,
     bool? showSettingsGlow,
+    String? languageCode,
   }) =>
       SettingsState(
         fontFamily: fontFamily ?? this.fontFamily,
@@ -34,6 +37,7 @@ class SettingsState {
         backgroundImagePath: backgroundImagePath ?? this.backgroundImagePath,
         customCovers: customCovers ?? this.customCovers,
         showSettingsGlow: showSettingsGlow ?? this.showSettingsGlow,
+        languageCode: languageCode ?? this.languageCode,
       );
 }
 
@@ -43,6 +47,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   static const _prefBgImage = 'onda_bg_image';
   static const _prefCovers = 'onda_custom_covers';
   static const _prefLastVisit = 'onda_last_settings_visit';
+  static const _prefLanguage = 'onda_language';
 
   late final SharedPreferences _prefs;
 
@@ -56,6 +61,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final colorVal = _prefs.getInt(_prefColor) ?? 0xFF8B5CF6;
     final bgImage = _prefs.getString(_prefBgImage);
     final coversJson = _prefs.getString(_prefCovers);
+    final language = _prefs.getString(_prefLanguage) ?? 'system';
     Map<String, String> covers = {};
     if (coversJson != null) {
       try {
@@ -74,6 +80,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       backgroundImagePath: bgImage,
       customCovers: covers,
       showSettingsGlow: showGlow,
+      languageCode: language,
     );
   }
 
@@ -105,6 +112,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     }
     state = state.copyWith(customCovers: updated);
     await _prefs.setString(_prefCovers, jsonEncode(updated));
+  }
+
+  Future<void> setLanguageCode(String code) async {
+    state = state.copyWith(languageCode: code);
+    await _prefs.setString(_prefLanguage, code);
   }
 
   Future<void> markSettingsVisited() async {

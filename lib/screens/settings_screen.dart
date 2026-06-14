@@ -8,6 +8,7 @@ import '../providers/sleep_timer_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/player_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/localization_provider.dart';
 import '../theme.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -21,7 +22,7 @@ class SettingsScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('Ajustes'),
+        title: Text(ref.watch(l10nProvider).translate('general.settings')),
         centerTitle: false,
       ),
       body: Container(
@@ -47,6 +48,8 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Widget _buildBody(BuildContext context, WidgetRef ref, SettingsState settings) {
+    final l10n = ref.watch(l10nProvider);
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -55,21 +58,67 @@ class SettingsScreen extends ConsumerWidget {
           const _DeveloperGdprCard(),
           const SizedBox(height: 16),
 
-
-
           // Tarjeta 2: Personalización
           _buildCard(
-            title: 'Personalización de Interfaz',
+            title: l10n.translate('settings_screen.customization_title'),
             icon: Icons.palette_outlined,
             settings: settings,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Selector de Idioma
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Idioma / Language:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    DropdownButton<String>(
+                      value: settings.languageCode,
+                      dropdownColor: OndaTheme.card,
+                      underline: const SizedBox(),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'system',
+                          child: Text('Automático (Sistema)', style: TextStyle(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'es',
+                          child: Text('Español', style: TextStyle(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'en',
+                          child: Text('English', style: TextStyle(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'fr',
+                          child: Text('Français', style: TextStyle(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'it',
+                          child: Text('Italiano', style: TextStyle(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'pt',
+                          child: Text('Português', style: TextStyle(color: OndaTheme.textPrimary)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'zh_Hans',
+                          child: Text('中文 (简体)', style: TextStyle(color: OndaTheme.textPrimary)),
+                        ),
+                      ],
+                      onChanged: (lang) {
+                        if (lang != null) {
+                          ref.read(settingsProvider.notifier).setLanguageCode(lang);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const Divider(color: OndaTheme.divider, height: 24),
                 // Tipografía
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Tipografía:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    Text(l10n.translate('settings_screen.typography'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     DropdownButton<String>(
                       value: settings.fontFamily,
                       dropdownColor: OndaTheme.card,
@@ -114,7 +163,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const Divider(color: OndaTheme.divider, height: 24),
                 // Color Primario
-                const Text('Color Principal:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(l10n.translate('settings_screen.primary_color'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 _buildColorChooser(ref, settings),
                 const Divider(color: OndaTheme.divider, height: 24),
@@ -126,9 +175,11 @@ class SettingsScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Imagen de Fondo:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                          Text(l10n.translate('settings_screen.background_image'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                           Text(
-                            settings.backgroundImagePath != null ? 'Imagen personalizada activa' : 'Usando fondo por defecto',
+                            settings.backgroundImagePath != null 
+                                ? l10n.translate('settings_screen.background_active') 
+                                : l10n.translate('settings_screen.background_default'),
                             style: const TextStyle(fontSize: 11, color: OndaTheme.textSecondary),
                           ),
                         ],
@@ -149,7 +200,7 @@ class SettingsScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                           icon: const Icon(Icons.image_search_rounded, size: 16),
-                          label: const Text('Elegir', style: TextStyle(fontSize: 12)),
+                          label: Text(l10n.translate('settings_screen.choose'), style: const TextStyle(fontSize: 12)),
                           onPressed: () => _pickBackgroundImage(ref),
                         ),
                       ],
@@ -262,6 +313,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildSleepTimerCard(WidgetRef ref, SettingsState settings) {
     final sleepTimer = ref.watch(sleepTimerProvider);
+    final l10n = ref.watch(l10nProvider);
 
     String formatDuration(Duration? duration) {
       if (duration == null) return '';
@@ -284,7 +336,7 @@ class SettingsScreen extends ConsumerWidget {
     };
 
     return _buildCard(
-      title: 'Temporizador de Apagado',
+      title: l10n.translate('settings_screen.sleep_timer_title'),
       icon: Icons.timer_outlined,
       settings: settings,
       child: Column(
@@ -299,14 +351,14 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     Text(
                       sleepTimer.isActive
-                          ? 'Apagando en: ${formatDuration(sleepTimer.remainingTime)}'
-                          : 'Temporizador inactivo',
+                          ? '${l10n.translate('settings_screen.sleep_timer_active')} ${formatDuration(sleepTimer.remainingTime)}'
+                          : l10n.translate('settings_screen.sleep_timer_inactive'),
                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Pausa la música al finalizar el tiempo',
-                      style: TextStyle(fontSize: 11, color: OndaTheme.textSecondary),
+                    Text(
+                      l10n.translate('settings_screen.sleep_timer_sub'),
+                      style: const TextStyle(fontSize: 11, color: OndaTheme.textSecondary),
                     ),
                   ],
                 ),
@@ -317,7 +369,7 @@ class SettingsScreen extends ConsumerWidget {
                     ref.read(sleepTimerProvider.notifier).cancelTimer();
                   },
                   icon: const Icon(Icons.cancel_outlined, size: 16, color: Colors.redAccent),
-                  label: const Text('Cancelar', style: TextStyle(fontSize: 12, color: Colors.redAccent)),
+                  label: Text(l10n.translate('general.cancel'), style: const TextStyle(fontSize: 12, color: Colors.redAccent)),
                 ),
             ],
           ),
@@ -363,6 +415,7 @@ class _DeveloperGdprCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final primaryColor = settings.primaryColor;
+    final l10n = ref.watch(l10nProvider);
 
     return Container(
       width: double.infinity,
@@ -398,9 +451,9 @@ class _DeveloperGdprCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Desarrollado por Damián Arenas',
-                        style: TextStyle(
+                      Text(
+                        l10n.translate('settings_screen.developed_by'),
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -408,7 +461,7 @@ class _DeveloperGdprCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Cumplimiento RGPD & Privacidad',
+                        l10n.translate('settings_screen.gdpr_title'),
                         style: TextStyle(
                           fontSize: 11,
                           color: primaryColor,
@@ -421,9 +474,9 @@ class _DeveloperGdprCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Onda es un reproductor de música local privado y seguro. No recopilamos, almacenamos ni compartimos ningún dato de usuario.',
-              style: TextStyle(
+            Text(
+              l10n.translate('settings_screen.gdpr_summary'),
+              style: const TextStyle(
                 fontSize: 12,
                 color: OndaTheme.textPrimary,
                 height: 1.4,
@@ -432,20 +485,20 @@ class _DeveloperGdprCard extends ConsumerWidget {
             const Divider(color: OndaTheme.divider, height: 24),
             _buildBullet(
               Icons.visibility_off_outlined,
-              'Privacidad Total',
-              'La aplicación no recopila ninguna información personal, datos de uso, telemetría o analíticas.',
+              l10n.translate('settings_screen.gdpr_total_privacy_title'),
+              l10n.translate('settings_screen.gdpr_total_privacy_desc'),
             ),
             const SizedBox(height: 8),
             _buildBullet(
               Icons.storage_rounded,
-              'Datos Locales',
-              'El acceso al almacenamiento del dispositivo se utiliza exclusivamente para indexar y reproducir tus archivos locales de música. Ningún dato sale de tu dispositivo.',
+              l10n.translate('settings_screen.gdpr_local_data_title'),
+              l10n.translate('settings_screen.gdpr_local_data_desc'),
             ),
             const SizedBox(height: 8),
             _buildBullet(
               Icons.gavel_rounded,
-              'Responsable',
-              'Damián Arenas, como desarrollador de Onda, es el responsable único del tratamiento (estrictamente local) de acuerdo con el RGPD.',
+              l10n.translate('settings_screen.gdpr_responsible_title'),
+              l10n.translate('settings_screen.gdpr_responsible_desc'),
             ),
           ],
         ),

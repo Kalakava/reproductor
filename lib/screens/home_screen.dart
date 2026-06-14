@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/player_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/localization_provider.dart';
 import '../widgets/mini_player.dart';
 import 'songs_screen.dart';
 import 'playlists_screen.dart';
@@ -28,6 +29,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final hasCurrentSong =
         ref.watch(playerProvider.select((s) => s.currentSong != null));
     final settings = ref.watch(settingsProvider);
+    final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
       // El cuerpo usa Stack para que el mini-reproductor flote encima del contenido
@@ -52,15 +54,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }
         },
         destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.library_music_outlined),
-            selectedIcon: Icon(Icons.library_music),
-            label: 'Canciones',
+          NavigationDestination(
+            icon: const Icon(Icons.library_music_outlined),
+            selectedIcon: const Icon(Icons.library_music),
+            label: l10n.translate('general.songs'),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.queue_music_outlined),
-            selectedIcon: Icon(Icons.queue_music),
-            label: 'Listas',
+          NavigationDestination(
+            icon: const Icon(Icons.queue_music_outlined),
+            selectedIcon: const Icon(Icons.queue_music),
+            label: l10n.translate('general.playlists'),
           ),
           NavigationDestination(
             icon: _PulsingSettingsIcon(
@@ -69,7 +71,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               glowColor: settings.primaryColor,
             ),
             selectedIcon: const Icon(Icons.settings),
-            label: 'Ajustes',
+            label: l10n.translate('general.settings'),
           ),
         ],
       ),
