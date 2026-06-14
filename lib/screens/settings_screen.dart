@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:on_audio_query/on_audio_query.dart';
-import '../services/library_service.dart';
 import '../providers/sleep_timer_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/player_provider.dart';
@@ -54,8 +51,8 @@ class SettingsScreen extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
-          // Banner de publicidad / anuncios remotos
-          const _RemoteBanner(),
+          // Tarjeta de desarrollador y cumplimiento RGPD
+          const _DeveloperGdprCard(),
           const SizedBox(height: 16),
 
 
@@ -357,237 +354,126 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-// ─── Banner Remoto / Push publicitario del desarrollador ───────────────────────
+// ─── Tarjeta del Desarrollador y Cumplimiento RGPD ──────────────────────────────
 
-class _RemoteBanner extends StatefulWidget {
-  const _RemoteBanner();
-
-  @override
-  State<_RemoteBanner> createState() => _RemoteBannerState();
-}
-
-class _RemoteBannerState extends State<_RemoteBanner> {
-  bool _isLoading = true;
-  Map<String, dynamic>? _bannerData;
+class _DeveloperGdprCard extends ConsumerWidget {
+  const _DeveloperGdprCard();
 
   @override
-  void initState() {
-    super.initState();
-    _fetchBanner();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final primaryColor = settings.primaryColor;
 
-  Future<void> _fetchBanner() async {
-    // Configuración por defecto local
-    final fallback = {
-      'show_banner': true,
-      'title': 'Onda Premium',
-      'message': 'Onda es tu reproductor de música local moderno, rápido y libre de anuncios. Gracias por apoyar a Damián Arenas en el desarrollo.',
-      'action_text': null,
-      'action_url': null,
-    };
-
-    try {
-      final client = HttpClient();
-      // Petición al repositorio de GitHub
-      final request = await client.getUrl(Uri.parse(
-        'https://raw.githubusercontent.com/Kalakava/reproductor/main/banner.json',
-      )).timeout(const Duration(seconds: 3));
-
-      final response = await request.close();
-      if (response.statusCode == 200) {
-        final content = await response.transform(utf8.decoder).join();
-        final decoded = jsonDecode(content) as Map<String, dynamic>;
-        if (mounted) {
-          setState(() {
-            _bannerData = decoded;
-            _isLoading = false;
-          });
-        }
-      } else {
-        throw Exception();
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _bannerData = fallback;
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _launchUrl(String url) async {
-    try {
-      await LibraryService.openUrl(url);
-    } catch (_) {}
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Container(
-        height: 80,
-        alignment: Alignment.center,
-        child: const CircularProgressIndicator(strokeWidth: 2),
-      );
-    }
-
-    final data = _bannerData;
-    if (data == null || data['show_banner'] != true) {
-      return const SizedBox.shrink();
-    }
-
-    final String title = data['title'] ?? 'Novedades de Onda';
-    final String message = data['message'] ?? '';
-    final String? imageUrl = data['image_url'];
-    final String? actionText = data['action_text'];
-    final String? actionUrl = data['action_url'];
-    final String? streamAudioUrl = data['stream_audio_url'];
-
-    return Consumer(
-      builder: (context, ref, _) {
-        final settings = ref.watch(settingsProvider);
-        final isPlayingBannerSong = ref.watch(playerProvider.select((s) => s.currentSong?.id == 999999));
-        final isPlaying = ref.watch(playerProvider.select((s) => s.isPlaying));
-
-        return Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                settings.primaryColor.withOpacity(0.2),
-                OndaTheme.card.withOpacity(0.9),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primaryColor.withOpacity(0.12),
+            OndaTheme.card.withOpacity(0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primaryColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: primaryColor.withOpacity(0.15),
+                  radius: 18,
+                  child: Icon(Icons.security_rounded, color: primaryColor, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Desarrollado por Damián Arenas',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Cumplimiento RGPD & Privacidad',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: settings.primaryColor.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (imageUrl != null && imageUrl.isNotEmpty)
-                Image.network(
-                  imageUrl,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: settings.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      message,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: OndaTheme.textPrimary,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        if (actionUrl != null && actionUrl.isNotEmpty && actionText != null)
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: settings.primaryColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            ),
-                            onPressed: () => _launchUrl(actionUrl),
-                            child: Text(actionText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                        if (actionUrl != null && actionUrl.isNotEmpty && actionText != null && streamAudioUrl != null)
-                          const SizedBox(width: 12),
-                        if (streamAudioUrl != null && streamAudioUrl.isNotEmpty)
-                          OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: settings.primaryColor,
-                              side: BorderSide(color: settings.primaryColor),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            ),
-                            icon: Icon(
-                              isPlayingBannerSong && isPlaying
-                                  ? Icons.pause_rounded
-                                  : Icons.play_arrow_rounded,
-                              size: 16,
-                            ),
-                            label: Text(
-                              isPlayingBannerSong && isPlaying ? 'Pausar tema' : 'Escuchar tema',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                            onPressed: () {
-                              if (isPlayingBannerSong) {
-                                if (isPlaying) {
-                                  ref.read(playerProvider.notifier).pause();
-                                } else {
-                                  ref.read(playerProvider.notifier).resume();
-                                }
-                              } else {
-                                final song = SongModel({
-                                  '_id': 999999,
-                                  '_data': streamAudioUrl,
-                                  'title': data['audio_title'] ?? 'Tema Inédito',
-                                  'artist': data['audio_artist'] ?? 'Damián Arenas',
-                                  'album': 'Streaming',
-                                  'duration': 180000,
-                                  'uri': streamAudioUrl,
-                                });
-                                ref.read(playerProvider.notifier).play([song], 0);
-                              }
-                            },
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(color: OndaTheme.divider, height: 1),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.security_rounded,
-                          size: 14,
-                          color: OndaTheme.textSecondary,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Privacidad total: Onda no recopila ninguna información, datos de uso o analíticas.',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: OndaTheme.textSecondary.withOpacity(0.8),
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            const SizedBox(height: 12),
+            const Text(
+              'Onda es un reproductor de música local privado y seguro. No recopilamos, almacenamos ni compartimos ningún dato de usuario.',
+              style: TextStyle(
+                fontSize: 12,
+                color: OndaTheme.textPrimary,
+                height: 1.4,
               ),
-            ],
+            ),
+            const Divider(color: OndaTheme.divider, height: 24),
+            _buildBullet(
+              Icons.visibility_off_outlined,
+              'Privacidad Total',
+              'La aplicación no recopila ninguna información personal, datos de uso, telemetría o analíticas.',
+            ),
+            const SizedBox(height: 8),
+            _buildBullet(
+              Icons.storage_rounded,
+              'Datos Locales',
+              'El acceso al almacenamiento del dispositivo se utiliza exclusivamente para indexar y reproducir tus archivos locales de música. Ningún dato sale de tu dispositivo.',
+            ),
+            const SizedBox(height: 8),
+            _buildBullet(
+              Icons.gavel_rounded,
+              'Responsable',
+              'Damián Arenas, como desarrollador de Onda, es el responsable único del tratamiento (estrictamente local) de acuerdo con el RGPD.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBullet(IconData icon, String title, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: OndaTheme.textSecondary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 11, color: OndaTheme.textSecondary, height: 1.3),
+              children: [
+                TextSpan(
+                  text: '$title: ',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: OndaTheme.textPrimary),
+                ),
+                TextSpan(text: text),
+              ],
+            ),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
