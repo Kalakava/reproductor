@@ -46,3 +46,5 @@ app.*.map.json
 
 # Store and translation resources
 /guia_y_recursos/
+/necesarios_para_despliegue/
+/necesarios para despliegue/
