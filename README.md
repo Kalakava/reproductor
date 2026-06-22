@@ -48,7 +48,7 @@ Si deseas compilar la aplicación localmente en tu entorno de desarrollo, sigue 
 
 *   **Desarrollador:** Damián Arenas
 *   **Repositorio oficial:** [https://github.com/Kalakava/reproductor](https://github.com/Kalakava/reproductor)
-*   **Correo de contacto:** [kakalavacalexera@gmail.com](mailto:kakalavacalexera@gmail.com)
+*   **Correo de contacto:** [arguitienda@gmail.com](mailto:arguitienda@gmail.com)
 
 ---
 
